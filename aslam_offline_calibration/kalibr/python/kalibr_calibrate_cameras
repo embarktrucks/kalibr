@@ -443,6 +443,38 @@ def main():
         else:
             break #normal exit
 
+from PIL import Image
+import kalibr_common as kc
+import kalibr_camera_calibration as kcc
+
+def intrinsic_calibration_compare():
+    folder = "data/cam3newtruck204"
+    camera_model_name = 'pinhole-equi'
+    target_file = 'target.yaml'
+    # Load Images from a folder
+    img_paths = sorted([folder + f for f in os.listdir(folder) if f[-3:]=="png"])
+    for img_path in img_paths:
+        pil_img = Image.open(img_file)
+        img = np.array(pil_img)    
+
+        #TODO: Run initial checks like bluriness
+
+        # Run Feature detector on it
+        target_observations = []
+        target_params = kc.CalibrationTargetParameters(target_file)
+        camera_model = cameraModels[camera_model]
+        target_detector = TargetDetector(target_params, camera_model.geometry())
+        success, observation = target_detector.findTargetNoTransformation(timestamp, img)
+        target_observations.append(observation)
+
+        # Check if the detected corners cover the whole image uniformly
+        # Write down the features in npy file
+    
+    # calibrate with the detected features
+
+
+
+
 if __name__ == "__main__":
     main()
 #     try:
