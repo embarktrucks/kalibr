@@ -478,7 +478,7 @@ def plotAzumithalError(cself, cam_id, fno=1, clearFigure=True, stats=None, noSho
     if not noShow:
         pl.show()
 
-def plotAllReprojectionErrors(cself, cam_id, fno=1, noShow=False, clearFigure=True, title=""):
+def plotAllReprojectionErrors(cself, cam_id, fno=1, noShow=False, clearFigure=True, title="", hm_resolution=resolution):
     # left: observations and projecitons
     # right: scatterplot of reprojection errors
     all_corners, reprojections, rerrs_xy = getReprojectionErrors(cself, cam_id)
@@ -495,14 +495,32 @@ def plotAllReprojectionErrors(cself, cam_id, fno=1, noShow=False, clearFigure=Tr
     
     #detected corners plot
     a=pl.subplot(121)
+    heatmap_width = np.ceil(resolution[1]/hm_resolution)
+    heatmap_height = np.ceil(resolution[0]/hm_resolution)
+    corners_heatmap = np.zeros((heatmap_width, heatmap_height))
     for view_id, corners in enumerate(all_corners):
         if corners is not None: #if this camerea sees the target in this view
+            for corner in corners:
+                x_index = np.ceil(corner[0]/hm_resolution)
+                y_index = np.ceil(corner[1]/hm_resolution)
+                corners_heatmap[y_index][x_index] += 1
+            
             color = cmap[view_id,:]
             pl.plot(corners[:,0], corners[:,1],'o-', mfc=color, c=color, mec=color)
 
     #add an empty image to force the aspect ratio
     I=np.zeros((resolution[1], resolution[0]))
     pl.imshow(I, cmap='Greys')
+
+    fig,ax = plt.subplot(221)
+    im = ax.imshow(corners_heatmap)
+    for i in range(heatmap_height):
+        for j in range(heatmap_width):
+            text = ax.text(j, i, corners_heatmap[i,j], ha='center', va='center', color='w')
+    
+    ax.title("Detected corners heatmap")
+    fig.tight_layout()
+    plt.show()
 
     #reprojection errors scatter plot
     sub = pl.subplot(122)
@@ -777,7 +795,8 @@ def generateReport(cself, filename="report.pdf", showOnScreen=True, graph=None, 
         figs.append(f)
         f = pl.figure(cidx*10+3)
         title="cam{0}: reprojection errors".format(cidx)
-        plotAllReprojectionErrors(cself, cidx, fno=f.number, noShow=True, title=title)
+        resolution = 10
+        plotAllReprojectionErrors(cself, cidx, fno=f.number, noShow=True, title=title, hm_resolution=resolution)
         plotter.add_figure(title, f)
         figs.append(f)
     
