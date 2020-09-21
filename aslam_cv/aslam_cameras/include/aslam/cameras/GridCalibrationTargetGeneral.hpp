@@ -29,7 +29,8 @@ class GridCalibrationTargetGeneral : public GridCalibrationTargetBase {
   bool computeObservation(const cv::Mat &image, Eigen::MatrixXd &outImagePoints,
                           std::vector<bool> &outCornerObserved) const;
 
-  void setPoints(const Eigen::MatrixXd &gridpoints);
+  /// \brief set _points private variable to 2D world points
+  void setPoints(const Eigen::MatrixXd &gridpoints2d);
 
  private:
   /// \brief initialize the object
