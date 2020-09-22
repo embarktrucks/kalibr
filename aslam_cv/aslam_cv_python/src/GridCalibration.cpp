@@ -33,7 +33,6 @@ void setImage(aslam::cameras::GridCalibrationTargetObservation * frame,
   frame->setImage(to);
 }
 
-
 class PythonImageList {
 public:
   typedef std::vector<cv::Mat> ImageListType;
@@ -133,7 +132,7 @@ boost::python::tuple imageGridPoint(
 
 /// \brief get all corners in target coordinates (order matches getCornersImageFrame)
 Eigen::MatrixXd getCornersTargetFrame(
-    aslam::cameras::GridCalibrationTargetObservation * frame) {
+  aslam::cameras::GridCalibrationTargetObservation * frame) {
   // Get the corners in the target frame
   std::vector<cv::Point3f> targetCorners;
   unsigned int numCorners = frame->getCornersTargetFrame(targetCorners);
@@ -286,6 +285,14 @@ void exportGridCalibration() {
       .def(init<>("Do not use the default constructor. It is only necessary for the pickle interface"))
       .def_pickle(sm::python::pickle_suite<GridCalibrationTargetCirclegrid>());
 
+  class_<GridCalibrationTargetGeneral, bases<GridCalibrationTargetBase>,
+      boost::shared_ptr<GridCalibrationTargetGeneral>, boost::noncopyable>(
+      "GridCalibrationTargetGeneral", 
+      init<size_t, size_t>("GridCalibrationTargetGeneral(size_t rows, size_t cols)"))
+      .def("setPoints", &GridCalibrationTargetGeneral::setPoints)
+      .def(init<>("Do not use the default constructor. It is only necessary for the pickle interface"))
+      .def_pickle(sm::python::pickle_suite<GridCalibrationTargetGeneral>());
+
 
   GridCalibrationTargetBase::Ptr (GridCalibrationTargetObservation::*target)() = &GridCalibrationTargetObservation::target;
 
@@ -305,6 +312,7 @@ void exportGridCalibration() {
     .def("getCornerReprojection", &getCornerReprojection)
     .def("getImage", &getImage)
     .def("setImage", &setImage)
+    .def("setTarget", &GridCalibrationTargetObservation::setTarget)
     .def("clearImage", &GridCalibrationTargetObservation::clearImage)
     .def("hasSuccessfulObservation",  &GridCalibrationTargetObservation::hasSuccessfulObservation)
     .def("imagePoint", &imagePoint)

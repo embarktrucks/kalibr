@@ -1,21 +1,21 @@
-import sm
-from sm import PlotCollection
-from kalibr_common import ConfigReader as cr
-import aslam_cv as acv
-import aslam_cameras_april as acv_april
-import aslam_cv_backend as acvb
+import gc
+import math
+import sys
+
 import aslam_backend as aopt
+import aslam_cameras_april as acv_april
+import aslam_cv as acv
+import aslam_cv_backend as acvb
+import cv2
 import incremental_calibration as ic
 import kalibr_camera_calibration as kcc
-
-from matplotlib.backends.backend_pdf import PdfPages
 import mpl_toolkits.mplot3d.axes3d as p3
-import cv2
 import numpy as np
 import pylab as pl
-import math
-import gc
-import sys
+import sm
+from kalibr_common import ConfigReader as cr
+from matplotlib.backends.backend_pdf import PdfPages
+from sm import PlotCollection
 
 np.set_printoptions(suppress=True, precision=8)
 
@@ -28,7 +28,7 @@ class OptimizationDiverged(Exception):
     pass
 
 class CameraGeometry(object):
-    def __init__(self, cameraModel, targetConfig, dataset, geometry=None, verbose=False):
+    def __init__(self, cameraModel, targetConfig, dataset, gridpoints=None, geometry=None, verbose=False):
         self.dataset = dataset
         
         self.model = cameraModel
@@ -44,7 +44,7 @@ class CameraGeometry(object):
         self.isGeometryInitialized = False
         
         #create target detector
-        self.ctarget = TargetDetector(targetConfig, self.geometry, showCorners=verbose, showReproj=verbose)
+        self.ctarget = TargetDetector(targetConfig, self.geometry, gridpoints=gridpoints, showCorners=verbose, showReproj=verbose)
 
     def setDvActiveStatus(self, projectionActive, distortionActive, shutterActice):
         self.dv.projectionDesignVariable().setActive(projectionActive)
@@ -73,7 +73,7 @@ class CameraGeometry(object):
         return success
 
 class TargetDetector(object):
-    def __init__(self, targetConfig, cameraGeometry, showCorners=False, showReproj=False, showOneStep=False):
+    def __init__(self, targetConfig, cameraGeometry, gridpoints=None, showCorners=False, showReproj=False, showOneStep=False):
         self.targetConfig = targetConfig
         
         #initialize the calibration target
@@ -115,6 +115,10 @@ class TargetDetector(object):
                                                                  targetParams['tagSize'], 
                                                                  targetParams['tagSpacing'], 
                                                                  options)
+        elif targetType == 'general':
+            self.grid = acv.GridCalibrationTargetGeneral(targetParams['tagRows'],
+                                                         targetParams['tagCols'])
+            self.grid.setPoints(gridpoints)
         else:
             RuntimeError('Unknown calibration target type!')
 
@@ -881,4 +885,3 @@ def saveResultTxt(cself, filename="camera_calibration_result.txt"):
     print >> f1, ""
 
     cself.cameras[0].ctarget.targetConfig.printDetails(f1)
-    
